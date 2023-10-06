@@ -1,39 +1,36 @@
-import lombok.Getter;
-import lombok.Setter;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 
 public class Cell extends JButton {
-    private static CurrentState nextFigure; // Начинаем с крестиков
-
+    //Using enumerations create the state of the button (empty, cross, zero),
+    // as well as a matrix that will store the states of all buttons
+    private static CurrentState nextFigure;
     private CurrentState currentState;
     private static CurrentState[][] gameBoard;
 
+    public Cell() {
 
-    public Cell(){
-        nextFigure = CurrentState.CROSS;
+        nextFigure = CurrentState.CROSS; // start with a cross
         currentState = CurrentState.EMPTY;
-        gameBoard = new CurrentState[3][3];
-       setBackground(Color.BLACK);
-       for(int i = 0; i < 3; i++){
-           for(int j = 0; j < 3; j++){
-               gameBoard[i][j] = CurrentState.EMPTY;
-           }
-       }
-        addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
+        gameBoard = new CurrentState[3][3]; //made a matrix
+        setBackground(Color.BLACK);
+        // a cycle so that all the cells are empty first
+        for (int i = 0; i < 3; i++) {
+            for (int j = 0; j < 3; j++) {
+                gameBoard[i][j] = CurrentState.EMPTY;
+            }
+        }
+       // when the button is pressed, a shape is drawn depending on the order.
+        // If you started with a cross, then the next figure will be a circle
+        addActionListener(e -> {
 
-                if (currentState == CurrentState.EMPTY) {
-                    currentState = nextFigure;
-                    gameBoard[getXPosition()][getYPosition()] = currentState;
-                    nextFigure = (nextFigure == CurrentState.CROSS) ? CurrentState.CIRCLE : CurrentState.CROSS; // Чередование фигур
-                    repaint();
-                    checkForWin();
-                }
+            if (currentState == CurrentState.EMPTY) {
+                currentState = nextFigure;
+                gameBoard[getXPosition()][getYPosition()] = currentState;
+                nextFigure = (nextFigure == CurrentState.CROSS) ? CurrentState.CIRCLE : CurrentState.CROSS; // alternation
+                repaint();
+                checkForWin();// victory check at every turn
             }
         });
 
@@ -41,18 +38,14 @@ public class Cell extends JButton {
 
     private void checkForWin() {
         if (checkRowsForWin() || checkColumnsForWin() || checkDiagonalsForWin()) {
-            JOptionPane.showMessageDialog(this, currentState + " wins!");
+            JOptionPane.showMessageDialog(this, currentState + " wins");
             resetGame();
-
-            // Добавьте здесь логику завершения игры, если нужно.
         } else if (isBoardFull()) {
-            JOptionPane.showMessageDialog(this, "It's a draw!");
+            JOptionPane.showMessageDialog(this, "It's a draw");
             resetGame();
-
-            // Добавьте здесь логику завершения игры, если нужно.
         }
     }
-
+    //reset the current game state
     private void resetGame() {
         for (int row = 0; row < 3; row++) {
             for (int col = 0; col < 3; col++) {
@@ -86,22 +79,19 @@ public class Cell extends JButton {
     }
 
     private boolean checkDiagonalsForWin() {
-        if ((gameBoard[0][0] == currentState && gameBoard[1][1] == currentState && gameBoard[2][2] == currentState) ||
-                (gameBoard[0][2] == currentState && gameBoard[1][1] == currentState && gameBoard[2][0] == currentState)) {
-            return true;
-        }
-        return false;
+        return (gameBoard[0][0] == currentState && gameBoard[1][1] == currentState && gameBoard[2][2] == currentState) ||
+                (gameBoard[0][2] == currentState && gameBoard[1][1] == currentState && gameBoard[2][0] == currentState);
     }
 
     private boolean isBoardFull() {
         for (int row = 0; row < 3; row++) {
             for (int col = 0; col < 3; col++) {
                 if (gameBoard[row][col] == CurrentState.EMPTY) {
-                    return false; // Найдена пустая клетка, игра не окончена.
+                    return false; // An empty cell is found, the game is not over.
                 }
             }
         }
-        return true; // Все клетки заполнены, игра завершена как ничья.
+        return true; // All squares are filled, the game is completed as a draw.
     }
 
     private int getXPosition() {
@@ -113,7 +103,6 @@ public class Cell extends JButton {
     }
 
 
-
     @Override
     protected void paintComponent(Graphics g) {
 
@@ -121,24 +110,24 @@ public class Cell extends JButton {
 
         Graphics2D g2d = (Graphics2D) g;
         g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-
         g2d.setColor(Color.WHITE);
-
         g2d.setStroke(new BasicStroke(3));
+
         int size = Math.min(getWidth(), getHeight()) - 60;
         int x = (getWidth() - size) / 2;
         int y = (getHeight() - size) / 2;
 
         if (currentState == CurrentState.CROSS) {
-            // Рисуем крестик
+            //make a sign of the cross
             g2d.drawLine(x, y, x + size, y + size);
             g2d.drawLine(x, y + size, x + size, y);
         } else if (currentState == CurrentState.CIRCLE) {
-            // Рисуем нолик
+            //make a sign of the circle
             g2d.drawOval(x, y, size, size);
         }
 
     }
+
     public interface GameResetListener {
         void onGameReset();
     }
@@ -148,6 +137,7 @@ public class Cell extends JButton {
     public static void registerGameResetListener(GameResetListener listener) {
         gameResetListener = listener;
     }
+
     public void resetCell() {
         currentState = CurrentState.EMPTY;
         repaint();
